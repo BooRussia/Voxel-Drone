@@ -37,7 +37,7 @@ function boot() {
   renderer.setClearColor(0x000000, 1);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.12;
+  renderer.toneMappingExposure = 0.95;
   renderer.shadowMap.enabled = false;
 
   const scene = new THREE.Scene();
@@ -56,26 +56,21 @@ function boot() {
   scene.add(lens.root);
   placeLens();
 
-  const key = new THREE.DirectionalLight(0xf6f7ff, 2.4);
-  key.position.set(1.6, 2.2, 2.8);
+  const key = new THREE.DirectionalLight(0xf0e6d4, 0.55);
+  key.position.set(0.4, 1.2, 2.4);
   key.castShadow = false;
   scene.add(key);
 
-  const kick = new THREE.DirectionalLight(0xffffff, 1.35);
-  kick.position.set(-2.2, 0.8, 1.8);
-  kick.castShadow = false;
-  scene.add(kick);
-
-  const fill = new THREE.AmbientLight(0x14161c, 0.28);
+  const fill = new THREE.AmbientLight(0x101218, 0.18);
   scene.add(fill);
 
   const keys = [
-    { t: 0, pos: [0.04, 0.03, 1.48], look: [0, 0, 0.2], yaw: 0, pitch: 0, fov: 26 },
-    { t: 0.2, pos: [0.28, 0.16, 1.95], look: [0, 0, 0.08], yaw: 0.32, pitch: 0.06, fov: 28 },
-    { t: 0.4, pos: [1.05, 0.12, 1.62], look: [0, 0, 0.02], yaw: 0.82, pitch: 0.04, fov: 30 },
-    { t: 0.6, pos: [1.28, 0.28, 0.92], look: [0, 0, -0.06], yaw: 1.18, pitch: -0.05, fov: 30 },
-    { t: 0.8, pos: [0.48, 0.1, 1.72], look: [0, 0, 0.1], yaw: 0.4, pitch: 0.03, fov: 28 },
-    { t: 1, pos: [1.02, 0.06, 1.4], look: [0.22, 0, 0.12], yaw: 0.18, pitch: 0.02, fov: 27 },
+    { t: 0, pos: [0, 0, 1.18], look: [0, 0, 0.42], yaw: 0, pitch: 0, fov: 22 },
+    { t: 0.2, pos: [0.12, 0.06, 1.42], look: [0, 0, 0.3], yaw: 0.18, pitch: 0.03, fov: 24 },
+    { t: 0.4, pos: [0.55, 0.08, 1.35], look: [0, 0, 0.2], yaw: 0.55, pitch: 0.04, fov: 26 },
+    { t: 0.6, pos: [0.95, 0.16, 1.05], look: [0, 0, 0.08], yaw: 0.95, pitch: -0.03, fov: 27 },
+    { t: 0.8, pos: [0.28, 0.05, 1.38], look: [0, 0, 0.28], yaw: 0.28, pitch: 0.02, fov: 24 },
+    { t: 1, pos: [0.62, 0.04, 1.22], look: [0.12, 0, 0.32], yaw: 0.14, pitch: 0.01, fov: 23 },
   ];
 
   const rest = keys[0];
@@ -167,11 +162,7 @@ function boot() {
   }
 
   function placeLens() {
-    if (window.innerWidth < 800) {
-      lens.root.position.set(0.28, 0.02, 0);
-    } else {
-      lens.root.position.set(0.18, 0, 0);
-    }
+    lens.root.position.set(0, 0, 0);
   }
 
   function onResize() {
