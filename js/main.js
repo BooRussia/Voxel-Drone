@@ -37,7 +37,7 @@ function boot() {
   renderer.setClearColor(0x000000, 1);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.95;
+  renderer.toneMappingExposure = 1.2;
   renderer.shadowMap.enabled = false;
 
   const scene = new THREE.Scene();
@@ -56,21 +56,25 @@ function boot() {
   scene.add(lens.root);
   placeLens();
 
-  const key = new THREE.DirectionalLight(0xf0e6d4, 0.55);
-  key.position.set(0.4, 1.2, 2.4);
+  scene.add(new THREE.AmbientLight(0xc4d0e4, 0.62));
+  const key = new THREE.DirectionalLight(0xffd4a8, 1.45);
+  key.position.set(-1.6, 1.8, 5.2);
   key.castShadow = false;
   scene.add(key);
-
-  const fill = new THREE.AmbientLight(0x101218, 0.18);
+  const fill = new THREE.DirectionalLight(0x88a4cc, 0.78);
+  fill.position.set(2.6, -0.15, 4.1);
   scene.add(fill);
+  const rim = new THREE.DirectionalLight(0xffb070, 0.62);
+  rim.position.set(0.15, 2.5, -2.6);
+  scene.add(rim);
 
   const keys = [
-    { t: 0, pos: [0.1, 0.14, 1.55], look: [0, 0, 0.12], yaw: 0, pitch: 0.04, fov: 24 },
-    { t: 0.2, pos: [0.22, 0.2, 2.4], look: [0, 0, 0.32], yaw: 0.16, pitch: 0.05, fov: 25 },
-    { t: 0.4, pos: [0.7, 0.16, 2.15], look: [0, 0, 0.2], yaw: 0.48, pitch: 0.05, fov: 26 },
-    { t: 0.6, pos: [1.15, 0.22, 1.7], look: [0, 0, 0.05], yaw: 0.88, pitch: 0.02, fov: 27 },
-    { t: 0.8, pos: [0.35, 0.16, 2.25], look: [0, 0, 0.3], yaw: 0.24, pitch: 0.04, fov: 25 },
-    { t: 1, pos: [0.72, 0.14, 2.1], look: [0.12, 0, 0.4], yaw: 0.12, pitch: 0.03, fov: 24 },
+    { t: 0, pos: [0, 0.02, 4.35], look: [0, 0, 0.2], yaw: 0, pitch: 0, fov: 30 },
+    { t: 0.2, pos: [0.2, 0.14, 4.75], look: [0.02, 0.02, 0.16], yaw: 0.1, pitch: 0.03, fov: 31 },
+    { t: 0.4, pos: [0.52, 0.12, 5.05], look: [0, 0.03, 0.12], yaw: 0.26, pitch: 0.04, fov: 32 },
+    { t: 0.6, pos: [0.82, 0.18, 4.45], look: [0, 0.02, 0.1], yaw: 0.4, pitch: 0.02, fov: 31 },
+    { t: 0.8, pos: [0.28, 0.1, 4.9], look: [0, 0, 0.16], yaw: 0.14, pitch: 0.03, fov: 30 },
+    { t: 1, pos: [0.1, 0.06, 4.15], look: [0.03, 0, 0.22], yaw: 0.08, pitch: 0.02, fov: 28 },
   ];
 
   const rest = keys[0];
@@ -80,7 +84,11 @@ function boot() {
   const camPos = new THREE.Vector3();
 
   applyPose(rest, rest, 0);
+  renderer.compile(scene, camera);
   renderer.render(scene, camera);
+  requestAnimationFrame(() => {
+    renderer.render(scene, camera);
+  });
 
   window.addEventListener(
     "scroll",

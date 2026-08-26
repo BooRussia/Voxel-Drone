@@ -2,19 +2,19 @@ import * as THREE from "three";
 
 function satinBlack() {
   return new THREE.MeshStandardMaterial({
-    color: 0x0b0b0d,
-    metalness: 0.7,
-    roughness: 0.48,
-    envMapIntensity: 0.4,
+    color: 0x2a2c32,
+    metalness: 0.62,
+    roughness: 0.42,
+    envMapIntensity: 1.15,
   });
 }
 
 function lipMetal() {
   return new THREE.MeshStandardMaterial({
-    color: 0x1c1e22,
-    metalness: 0.88,
-    roughness: 0.32,
-    envMapIntensity: 0.7,
+    color: 0x8a8e98,
+    metalness: 0.9,
+    roughness: 0.28,
+    envMapIntensity: 1.35,
   });
 }
 
@@ -78,7 +78,7 @@ function makeElement(cheap) {
       clearcoatRoughness: 0.02,
       opacity: 1,
       transparent: false,
-      envMapIntensity: 1.05,
+      envMapIntensity: 2.2,
     });
   }
 
@@ -95,9 +95,9 @@ function makeElement(cheap) {
     dispersion: 0.32,
     clearcoat: 1,
     clearcoatRoughness: 0.02,
-    attenuationColor: new THREE.Color(0x9aadc2),
-    attenuationDistance: 0.45,
-    envMapIntensity: 0.95,
+      attenuationColor: new THREE.Color(0xd4e0ec),
+      attenuationDistance: 2.4,
+      envMapIntensity: 2.15,
     specularIntensity: 1,
   });
 }
@@ -205,7 +205,24 @@ export function createLens(cheapGlass) {
 
   addIris(optic, bladeMat());
 
-  optic.rotation.x = -Math.PI / 2;
+  const wellMap = new THREE.CanvasTexture(duskCanvas());
+  wellMap.colorSpace = THREE.SRGBColorSpace;
+  wellMap.needsUpdate = true;
+  const plate = new THREE.Mesh(
+    new THREE.CircleGeometry(1.06, 48),
+    new THREE.MeshBasicMaterial({
+      map: wellMap,
+      color: 0xffffff,
+      side: THREE.DoubleSide,
+    })
+  );
+  plate.rotation.x = -Math.PI / 2;
+  plate.position.y = -0.34;
+  optic.add(plate);
+
+  // +X rotation maps optic +Y (front sag) onto world +Z, so the camera
+  // on +Z stares into the meniscus instead of the hollow throat.
+  optic.rotation.x = Math.PI / 2;
   yaw.add(optic);
   root.add(yaw);
 
@@ -230,23 +247,23 @@ function pine(ctx, x, baseY, h, w) {
   ctx.fill();
 }
 
-export function createEnvironment(renderer) {
+function duskCanvas() {
   const canvas = document.createElement("canvas");
   canvas.width = 256;
   canvas.height = 128;
   const ctx = canvas.getContext("2d");
 
-  ctx.fillStyle = "#7d8ea4";
+  ctx.fillStyle = "#9eb0c6";
   ctx.fillRect(0, 0, 256, 44);
-  ctx.fillStyle = "#66758c";
+  ctx.fillStyle = "#7d8aa0";
   ctx.fillRect(0, 44, 256, 18);
-  ctx.fillStyle = "#b67a3c";
+  ctx.fillStyle = "#d4924a";
   ctx.fillRect(0, 62, 256, 9);
-  ctx.fillStyle = "#d89a46";
+  ctx.fillStyle = "#f0b45a";
   ctx.fillRect(0, 69, 256, 6);
-  ctx.fillStyle = "#6a3818";
+  ctx.fillStyle = "#8a4a1c";
   ctx.fillRect(0, 75, 256, 8);
-  ctx.fillStyle = "#08090c";
+  ctx.fillStyle = "#101218";
   ctx.fillRect(0, 83, 256, 45);
 
   ctx.fillStyle = "rgba(230, 236, 244, 0.4)";
@@ -269,7 +286,11 @@ export function createEnvironment(renderer) {
   pine(ctx, 237, 84, 44, 23);
   pine(ctx, 220, 84, 32, 16);
   pine(ctx, 250, 84, 25, 12);
+  return canvas;
+}
 
+export function createEnvironment(renderer) {
+  const canvas = duskCanvas();
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.mapping = THREE.EquirectangularReflectionMapping;
