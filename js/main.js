@@ -59,19 +59,21 @@ function boot() {
   scene.add(lens.root);
   scene.add(createPool());
 
-  scene.add(new THREE.AmbientLight(0x8a9098, 0.1));
-  const key = new THREE.DirectionalLight(0xf4f0e8, 2.15);
-  key.position.set(-2.1, 2.4, 3.4);
+  scene.add(new THREE.AmbientLight(0x8a9098, 0.12));
+  const key = new THREE.DirectionalLight(0xf4f0e8, 2.7);
+  key.position.set(-0.4, 1.85, 2.55);
+  key.target.position.set(0, 0.15, 0.06);
   key.castShadow = false;
   scene.add(key);
+  scene.add(key.target);
 
   const keys = [
-    { t: 0, pos: [0.08, 0.04, 4.15], look: [0.12, 0.08, 0.16], shift: [1.62, 1.22, 0], yaw: 0.32, pitch: 0.1, fov: 32, env: "rest" },
-    { t: 0.2, pos: [0.08, 0.04, 4.3], look: [0.1, 0.06, 0.16], shift: [0.95, 0.7, 0], yaw: 0.24, pitch: 0.08, fov: 32, env: "rest" },
-    { t: 0.4, pos: [0.06, 0.04, 4.5], look: [0.06, 0.04, 0.17], shift: [0.4, 0.26, 0], yaw: 0.16, pitch: 0.05, fov: 31, env: "sites" },
-    { t: 0.6, pos: [0.08, 0.04, 4.6], look: [0.03, 0.02, 0.18], shift: [0.1, 0.06, 0], yaw: 0.1, pitch: 0.03, fov: 30, env: "interiors" },
-    { t: 0.8, pos: [0.14, 0.06, 4.75], look: [0.04, 0.02, 0.16], shift: [0.04, 0.02, 0], yaw: 0.14, pitch: 0.04, fov: 30, env: "events" },
-    { t: 1, pos: [0.05, 0.03, 4.5], look: [0, 0, 0.2], shift: [0, 0, 0], yaw: 0.08, pitch: 0.02, fov: 29, env: "rest" },
+    { t: 0, pos: [0.08, 0.04, 4.05], look: [0.12, 0.08, -0.12], shift: [1.62, 1.22, 0], yaw: 0.2, pitch: 0.08, fov: 32, env: "rest" },
+    { t: 0.2, pos: [0.08, 0.04, 4.3], look: [0.1, 0.06, -0.1], shift: [0.95, 0.7, 0], yaw: 0.24, pitch: 0.08, fov: 32, env: "rest" },
+    { t: 0.4, pos: [0.06, 0.04, 4.5], look: [0.06, 0.04, -0.12], shift: [0.4, 0.26, 0], yaw: 0.16, pitch: 0.05, fov: 31, env: "sites" },
+    { t: 0.6, pos: [0.08, 0.04, 4.6], look: [0.03, 0.02, -0.14], shift: [0.1, 0.06, 0], yaw: 0.1, pitch: 0.03, fov: 30, env: "interiors" },
+    { t: 0.8, pos: [0.14, 0.06, 4.75], look: [0.04, 0.02, -0.12], shift: [0.04, 0.02, 0], yaw: 0.14, pitch: 0.04, fov: 30, env: "events" },
+    { t: 1, pos: [0.05, 0.03, 4.35], look: [0, 0, -0.16], shift: [0, 0, 0], yaw: 0.08, pitch: 0.02, fov: 29, env: "rest" },
   ];
 
   const rest = keys[0];
