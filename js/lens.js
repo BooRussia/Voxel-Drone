@@ -45,16 +45,46 @@ function beadMat() {
   });
 }
 
+function radialThicknessMap() {
+  const size = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  const img = ctx.createImageData(size, size);
+  const mid = (size - 1) * 0.5;
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const dx = (x - mid) / mid;
+      const dy = (y - mid) / mid;
+      const r = Math.min(1, Math.sqrt(dx * dx + dy * dy));
+      const v = Math.round(255 * r * r);
+      const i = (y * size + x) * 4;
+      img.data[i] = v;
+      img.data[i + 1] = v;
+      img.data[i + 2] = v;
+      img.data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.NoColorSpace;
+  return tex;
+}
+
 function makeElement(cheap) {
+  const thicknessMap = radialThicknessMap();
   if (cheap) {
     return new THREE.MeshPhysicalMaterial({
       color: 0xcfd8e4,
       metalness: 0,
-      roughness: 0.05,
-      ior: 1.5,
-      thickness: 1.15,
+      roughness: 0,
+      ior: 1.52,
+      thickness: 1.2,
+      thicknessMap,
+      dispersion: 0,
       clearcoat: 1,
-      clearcoatRoughness: 0.03,
+      clearcoatRoughness: 0.02,
       opacity: 1,
       transparent: false,
       envMapIntensity: 1.05,
@@ -64,71 +94,35 @@ function makeElement(cheap) {
   return new THREE.MeshPhysicalMaterial({
     color: 0xffffff,
     metalness: 0,
-    roughness: 0.018,
+    roughness: 0,
     transmission: 1,
     opacity: 1,
     transparent: false,
-    thickness: 1.45,
+    thickness: 1.35,
+    thicknessMap,
     ior: 1.52,
-    dispersion: 0.38,
+    dispersion: 0.32,
     clearcoat: 1,
     clearcoatRoughness: 0.02,
     attenuationColor: new THREE.Color(0x9aadc2),
-    attenuationDistance: 0.42,
+    attenuationDistance: 0.45,
     envMapIntensity: 0.95,
     specularIntensity: 1,
   });
 }
 
-function spectralRim() {
-  return new THREE.ShaderMaterial({
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    vertexShader: `
-      varying vec3 vN;
-      varying vec3 vV;
-      varying float vA;
-      void main() {
-        vec4 w = modelViewMatrix * vec4(position, 1.0);
-        vN = normalize(normalMatrix * normal);
-        vV = normalize(-w.xyz);
-        vA = atan(position.z, position.x);
-        gl_Position = projectionMatrix * w;
-      }
-    `,
-    fragmentShader: `
-      varying vec3 vN;
-      varying vec3 vV;
-      varying float vA;
-      vec3 hue(float h) {
-        vec3 k = clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0);
-        return k * k * (3.0 - 2.0 * k);
-      }
-      void main() {
-        float f = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 1.8);
-        float lobe = 0.4 + 0.8 * pow(abs(sin(vA)), 1.15);
-        float a = clamp(f * lobe, 0.0, 1.0);
-        vec3 c = hue(fract(0.02 + vA * 0.18));
-        gl_FragColor = vec4(c * a, a);
-      }
-    `,
-  });
-}
-
 function frontElementGeometry() {
-  const R = 1.05;
-  const pts = [];
-  for (let i = 0; i <= 18; i += 1) {
-    const t = i / 18;
-    pts.push(new THREE.Vector2(R * t, -0.2 * (1 - t * t)));
+  const R = 1.12;
+  const geo = new THREE.SphereGeometry(R, 64, 32, 0, Math.PI * 2, 0, Math.PI / 2);
+  const uv = geo.attributes.uv;
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i += 1) {
+    const x = pos.getX(i) / R;
+    const z = pos.getZ(i) / R;
+    uv.setXY(i, x * 0.5 + 0.5, z * 0.5 + 0.5);
   }
-  for (let i = 18; i >= 0; i -= 1) {
-    const t = i / 18;
-    const r = Math.max(R * t, 0.0008);
-    pts.push(new THREE.Vector2(r, 0.3 * (1 - t * t)));
-  }
-  return new THREE.LatheGeometry(pts, 64);
+  uv.needsUpdate = true;
+  return geo;
 }
 
 function addIris(optic, mat) {
@@ -141,7 +135,7 @@ function addIris(optic, mat) {
     const a = (i / count) * Math.PI * 2;
     blade.rotation.x = Math.PI / 2;
     blade.rotation.z = a + 0.32;
-    blade.position.y = 0.28;
+    blade.position.y = -0.22;
     optic.add(blade);
   }
 }
@@ -156,34 +150,28 @@ export function createLens(cheapGlass) {
   const well = wellMat();
   const glass = makeElement(cheapGlass);
 
-  const retain = new THREE.Mesh(new THREE.TorusGeometry(1.12, 0.055, 10, 64), lip);
+  const retain = new THREE.Mesh(new THREE.TorusGeometry(1.14, 0.05, 10, 64), lip);
   retain.rotation.x = Math.PI / 2;
-  retain.position.y = 1.0;
+  retain.position.y = 0;
   optic.add(retain);
 
   const recessWall = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.1, 1.08, 0.22, 64, 1, true),
+    new THREE.CylinderGeometry(1.12, 1.1, 0.18, 64, 1, true),
     well
   );
-  recessWall.position.y = 0.88;
+  recessWall.position.y = -0.08;
   optic.add(recessWall);
 
   const element = new THREE.Mesh(frontElementGeometry(), glass);
   element.name = "lens";
-  element.position.y = 0.82;
   optic.add(element);
 
-  const ca = new THREE.Mesh(new THREE.TorusGeometry(1.06, 0.016, 8, 64), spectralRim());
-  ca.rotation.x = Math.PI / 2;
-  ca.position.y = 0.84;
-  optic.add(ca);
-
   const rings = [
-    [1.2, 0.032, 0.92, lip],
-    [1.28, 0.028, 0.82, black],
-    [1.36, 0.03, 0.72, lip],
-    [1.44, 0.026, 0.62, black],
-    [1.52, 0.03, 0.52, black],
+    [1.22, 0.032, -0.08, lip],
+    [1.3, 0.028, -0.18, black],
+    [1.38, 0.03, -0.28, lip],
+    [1.46, 0.026, -0.38, black],
+    [1.54, 0.03, -0.48, black],
   ];
   for (const [r, tube, y, mat] of rings) {
     const ring = new THREE.Mesh(new THREE.TorusGeometry(r, tube, 6, 48), mat);
@@ -192,27 +180,27 @@ export function createLens(cheapGlass) {
     optic.add(ring);
   }
 
-  const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(1.54, 1.48, 0.7, 48), black);
-  sleeve.position.y = 0.22;
+  const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(1.56, 1.5, 0.55, 48), black);
+  sleeve.position.y = -0.28;
   optic.add(sleeve);
 
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(1.46, 1.3, 0.65, 40), black);
-  barrel.position.y = -0.42;
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(1.48, 1.32, 0.55, 40), black);
+  barrel.position.y = -0.72;
   optic.add(barrel);
 
-  const throat = new THREE.Mesh(new THREE.CylinderGeometry(0.86, 0.36, 0.7, 32, 1, true), well);
-  throat.position.y = 0.42;
+  const throat = new THREE.Mesh(new THREE.CylinderGeometry(0.86, 0.36, 0.55, 32, 1, true), well);
+  throat.position.y = -0.22;
   optic.add(throat);
 
   const baffle = new THREE.Mesh(new THREE.TorusGeometry(0.52, 0.018, 6, 28), well);
   baffle.rotation.x = Math.PI / 2;
-  baffle.position.y = 0.48;
+  baffle.position.y = -0.16;
   optic.add(baffle);
 
   addIris(optic, bladeMat());
 
   const bead = new THREE.Mesh(new THREE.SphereGeometry(0.048, 16, 12), beadMat());
-  bead.position.y = 0.22;
+  bead.position.y = -0.28;
   optic.add(bead);
 
   optic.rotation.x = -Math.PI / 2;
