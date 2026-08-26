@@ -12,6 +12,7 @@ const glOpts = {
   powerPreference: "high-performance",
   stencil: false,
   depth: true,
+  preserveDrawingBuffer: true,
 };
 
 const gl = canvas.getContext("webgl2", glOpts);
@@ -31,6 +32,7 @@ function boot() {
     canvas,
     context: gl,
     antialias: !phone,
+    preserveDrawingBuffer: true,
   });
   renderer.setPixelRatio(dpr());
   renderer.setSize(window.innerWidth, window.innerHeight, false);
@@ -86,10 +88,41 @@ function boot() {
 
   applyPose(rest, rest, 0);
   renderer.compile(scene, camera);
-  renderer.render(scene, camera);
-  requestAnimationFrame(() => {
+
+  let bootFrames = 0;
+  function centerSum() {
+    const w = canvas.width;
+    const h = canvas.height;
+    if (w < 8 || h < 8) return 0;
+    const sw = Math.min(32, w);
+    const sh = Math.min(32, h);
+    const buf = new Uint8Array(sw * sh * 4);
+    gl.readPixels(
+      Math.max(0, (w >> 1) - (sw >> 1)),
+      Math.max(0, (h >> 1) - (sh >> 1)),
+      sw,
+      sh,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      buf
+    );
+    let max = 0;
+    for (let i = 0; i < buf.length; i += 4) {
+      const v = buf[i] + buf[i + 1] + buf[i + 2];
+      if (v > max) max = v;
+    }
+    return max;
+  }
+
+  function bootPaint() {
     renderer.render(scene, camera);
-  });
+    bootFrames += 1;
+    if (centerSum() < 48 && bootFrames < 16) {
+      requestAnimationFrame(bootPaint);
+      return;
+    }
+  }
+  bootPaint();
 
   window.addEventListener(
     "scroll",
