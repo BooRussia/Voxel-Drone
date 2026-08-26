@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createCraft, createEnvironment, createFlorida } from "./craft.js";
+import { createEnvironment, createLens } from "./lens.js";
 
 const canvas = document.getElementById("stage");
 const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -15,7 +15,6 @@ const glOpts = {
 };
 
 const gl = canvas.getContext("webgl2", glOpts);
-const cheapGlass = iphone;
 
 if (!gl) {
   document.body.style.background = "#000";
@@ -38,50 +37,45 @@ function boot() {
   renderer.setClearColor(0x000000, 1);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 1.12;
   renderer.shadowMap.enabled = false;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x000000);
-  scene.fog = new THREE.FogExp2(0x000000, 0.038);
 
   const camera = new THREE.PerspectiveCamera(
-    32,
+    28,
     window.innerWidth / window.innerHeight,
     0.05,
-    80
+    40
   );
 
   scene.environment = createEnvironment(renderer);
 
-  const craft = createCraft(cheapGlass);
-  scene.add(craft.root);
-  scene.add(createFlorida());
-  placeCraft();
+  const lens = createLens(iphone);
+  scene.add(lens.root);
+  placeLens();
 
-  const key = new THREE.DirectionalLight(0xf2f4ff, 2.15);
-  key.position.set(2.1, 2.4, 3.2);
+  const key = new THREE.DirectionalLight(0xf6f7ff, 2.4);
+  key.position.set(1.6, 2.2, 2.8);
   key.castShadow = false;
   scene.add(key);
 
-  const rim = new THREE.DirectionalLight(0xb7c6e0, 1.15);
-  rim.position.set(-3.4, 1.4, -1.2);
-  rim.castShadow = false;
-  scene.add(rim);
+  const kick = new THREE.DirectionalLight(0xffffff, 1.35);
+  kick.position.set(-2.2, 0.8, 1.8);
+  kick.castShadow = false;
+  scene.add(kick);
 
-  const fill = new THREE.AmbientLight(0x1a1c24, 0.55);
+  const fill = new THREE.AmbientLight(0x14161c, 0.28);
   scene.add(fill);
 
-  const hemi = new THREE.HemisphereLight(0x2a2e3c, 0x08080c, 0.7);
-  scene.add(hemi);
-
   const keys = [
-    { t: 0, pos: [1.32, 0.2, 1.78], look: [0.04, -0.14, 0.16], yaw: 0, gy: 0, gp: 0.12, fov: 31 },
-    { t: 0.2, pos: [2.15, 2.05, 3.55], look: [0, -1.15, 0.12], yaw: 0.72, gy: 0.22, gp: 0.92, fov: 36 },
-    { t: 0.4, pos: [0.15, 1.35, 4.55], look: [0, -0.05, 0], yaw: 1.15, gy: -0.18, gp: 0.18, fov: 35 },
-    { t: 0.6, pos: [-2.15, 0.88, 3.25], look: [0, -0.04, 0], yaw: 1.65, gy: 0.28, gp: -0.08, fov: 34 },
-    { t: 0.8, pos: [1.05, 0.42, 2.55], look: [0.08, -0.08, 0.1], yaw: 2.05, gy: 0.12, gp: 0.1, fov: 32 },
-    { t: 1, pos: [2.55, 0.62, 2.35], look: [0.55, -0.06, 0.08], yaw: 2.35, gy: 0.04, gp: 0.06, fov: 31 },
+    { t: 0, pos: [0.04, 0.03, 1.48], look: [0, 0, 0.2], yaw: 0, pitch: 0, fov: 26 },
+    { t: 0.2, pos: [0.28, 0.16, 1.95], look: [0, 0, 0.08], yaw: 0.32, pitch: 0.06, fov: 28 },
+    { t: 0.4, pos: [1.05, 0.12, 1.62], look: [0, 0, 0.02], yaw: 0.82, pitch: 0.04, fov: 30 },
+    { t: 0.6, pos: [1.28, 0.28, 0.92], look: [0, 0, -0.06], yaw: 1.18, pitch: -0.05, fov: 30 },
+    { t: 0.8, pos: [0.48, 0.1, 1.72], look: [0, 0, 0.1], yaw: 0.4, pitch: 0.03, fov: 28 },
+    { t: 1, pos: [1.02, 0.06, 1.4], look: [0.22, 0, 0.12], yaw: 0.18, pitch: 0.02, fov: 27 },
   ];
 
   const rest = keys[0];
@@ -160,9 +154,8 @@ function boot() {
       camera.fov = fov;
       camera.updateProjectionMatrix();
     }
-    craft.airframe.rotation.y = lerp(a.yaw, b.yaw, u);
-    craft.gimbal.rotation.y = lerp(a.gy, b.gy, u);
-    craft.gimbal.rotation.x = lerp(a.gp, b.gp, u);
+    lens.yaw.rotation.y = lerp(a.yaw, b.yaw, u);
+    lens.yaw.rotation.x = lerp(a.pitch, b.pitch, u);
   }
 
   function paint() {
@@ -173,11 +166,11 @@ function boot() {
     renderer.render(scene, camera);
   }
 
-  function placeCraft() {
+  function placeLens() {
     if (window.innerWidth < 800) {
-      craft.root.position.set(0.42, 0.06, 0);
+      lens.root.position.set(0.28, 0.02, 0);
     } else {
-      craft.root.position.set(0.22, 0, 0);
+      lens.root.position.set(0.18, 0, 0);
     }
   }
 
@@ -188,7 +181,7 @@ function boot() {
     camera.updateProjectionMatrix();
     renderer.setPixelRatio(dpr());
     renderer.setSize(w, h, false);
-    placeCraft();
+    placeLens();
     paint();
   }
 }

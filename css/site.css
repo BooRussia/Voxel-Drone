@@ -165,23 +165,36 @@ h1 {
   margin-bottom: 2rem;
 }
 
-.stills {
+.overlay-stills {
+  width: min(52vw, 34rem);
+}
+
+.wells {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 1.15rem;
+  gap: 1.25rem;
 }
 
-.stills li {
-  font-weight: 400;
-  font-size: 0.72rem;
+.wells li p {
+  margin: 0.55rem 0 0;
+  font-size: 0.62rem;
   letter-spacing: 0.28em;
 }
 
-.stills span {
-  font-size: 0.58rem;
-  letter-spacing: 0.22em;
+.wells span {
   color: var(--mute);
+}
+
+.well {
+  width: min(100%, 16.5rem);
+  aspect-ratio: 16 / 10;
+  background: #000;
+  border: 5px solid #16161a;
+  outline: 1px solid #d2d4de;
+  outline-offset: -6px;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 form {
