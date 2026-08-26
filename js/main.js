@@ -55,7 +55,7 @@ function boot() {
   const envs = createEnvironments(renderer);
   scene.environment = envs.rest;
 
-  const lens = createLens(iphone, envs.rest);
+  const lens = createLens(iphone, envs.rest, envs.world.rest);
   scene.add(lens.root);
   scene.add(createPool());
 
@@ -182,7 +182,7 @@ function boot() {
     boundEnv = name;
     const next = envs[name] || envs.rest;
     scene.environment = next;
-    lens.bindEnv(next);
+    lens.bindEnv(next, (envs.world && envs.world[name]) || envs.world.rest);
   }
 
   function applyPose(a, b, u) {

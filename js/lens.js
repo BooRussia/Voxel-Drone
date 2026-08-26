@@ -65,85 +65,88 @@ function radialThicknessMap() {
   return tex;
 }
 
-function makeFrontGlass(cheap, env) {
+function makeFrontGlass(cheap, env, world) {
   const thicknessMap = radialThicknessMap();
+  if (cheap) {
+    return new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      metalness: 0,
+      roughness: 0.04,
+      ior: 1.52,
+      thickness: 1.2,
+      thicknessMap,
+      dispersion: 0,
+      clearcoat: 1,
+      clearcoatRoughness: 0.04,
+      opacity: 1,
+      transparent: false,
+      transmission: 0,
+      depthWrite: true,
+      wireframe: false,
+      flatShading: false,
+      side: THREE.FrontSide,
+      map: world,
+      emissive: new THREE.Color(0xffffff),
+      emissiveMap: world,
+      emissiveIntensity: 0.95,
+      envMap: env,
+      envMapIntensity: 2.8,
+      specularIntensity: 1,
+    });
+  }
+
   return new THREE.MeshPhysicalMaterial({
-    color: cheap ? 0xc5ced8 : 0xd8e0e8,
+    color: 0xffffff,
     metalness: 0,
-    roughness: 0.12,
-    ior: 1.52,
-    thickness: 0.7,
-    thicknessMap,
-    dispersion: 0,
-    clearcoat: 0.55,
-    clearcoatRoughness: 0.08,
+    roughness: 0.04,
+    transmission: 0,
     opacity: 1,
     transparent: false,
-    transmission: 0,
+    thickness: 1.4,
+    thicknessMap,
+    ior: 1.52,
+    dispersion: 0,
+    clearcoat: 1,
+    clearcoatRoughness: 0.03,
+    attenuationColor: new THREE.Color(0xe8eef4),
+    attenuationDistance: 4,
     depthWrite: true,
     wireframe: false,
     flatShading: false,
     side: THREE.DoubleSide,
+    map: world,
+    emissive: new THREE.Color(0xffffff),
+    emissiveMap: world,
+    emissiveIntensity: 0.95,
     envMap: env,
-    envMapIntensity: 1.85,
+    envMapIntensity: 2.8,
     specularIntensity: 1,
-    vertexColors: true,
   });
 }
 
 function frontElementGeometry() {
-  const R = 0.34;
-  const sag = -0.03;
+  const R = 0.48;
+  const sag = -0.04;
   const pts = [];
-  for (let i = 0; i <= 24; i += 1) {
-    const t = i / 24;
+  for (let i = 0; i <= 32; i += 1) {
+    const t = i / 32;
     pts.push(new THREE.Vector2(R * t, sag * (1 - t * t)));
   }
-  const geo = new THREE.LatheGeometry(pts, 64);
+  const geo = new THREE.LatheGeometry(pts, 128);
   const pos = geo.attributes.position;
   const nrm = geo.attributes.normal;
-  const colors = new Float32Array(pos.count * 3);
+  const uv = geo.attributes.uv;
   const n = new THREE.Vector3();
   for (let i = 0; i < pos.count; i += 1) {
     const x = pos.getX(i);
     const z = pos.getZ(i);
-    n.set(x * 0.22, 1, z * 0.22).normalize();
+    n.set(x * 0.2, 1, z * 0.2).normalize();
     nrm.setXYZ(i, n.x, n.y, n.z);
-    const edge = Math.max(0, Math.min(1, (Math.hypot(x, z) - 0.24) / 0.08));
-    const a = Math.atan2(z, x);
-    const g = 0.5 + 0.5 * Math.sin(a * 2);
-    colors[i * 3] = 1 - edge * (0.1 + 0.16 * (1 - g));
-    colors[i * 3 + 1] = 1 - edge * (0.05 + 0.1 * g);
-    colors[i * 3 + 2] = 1 - edge * (0.08 + 0.14 * (1 - g));
+    uv.setXY(i, x / R * 0.5 + 0.5, z / R * 0.5 + 0.5);
   }
   nrm.needsUpdate = true;
-  geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  uv.needsUpdate = true;
   return geo;
-}
-
-function irisBladeGeometry() {
-  const shape = new THREE.Shape();
-  const inner = 0.46;
-  const outer = 0.74;
-  const innerSweep = 0.46;
-  const outerSweep = 0.86;
-  const inner0 = -0.3;
-  const outer0 = -0.12;
-  shape.moveTo(Math.cos(inner0) * inner, Math.sin(inner0) * inner);
-  for (let i = 1; i <= 7; i += 1) {
-    const t = inner0 + (i / 7) * innerSweep;
-    shape.lineTo(Math.cos(t) * inner, Math.sin(t) * inner);
-  }
-  for (let i = 7; i >= 0; i -= 1) {
-    const t = outer0 + (i / 7) * outerSweep;
-    shape.lineTo(Math.cos(t) * outer, Math.sin(t) * outer);
-  }
-  shape.closePath();
-  return new THREE.ExtrudeGeometry(shape, {
-    depth: 0.014,
-    bevelEnabled: false,
-    curveSegments: 1,
-  });
 }
 
 function addIris(optic, mat) {
@@ -153,17 +156,14 @@ function addIris(optic, mat) {
   housing.position.y = y;
   optic.add(housing);
 
-  const geo = irisBladeGeometry();
+  const geo = new THREE.BoxGeometry(0.3, 0.01, 0.12);
   const count = 9;
   for (let i = 0; i < count; i += 1) {
-    const pivot = new THREE.Group();
-    pivot.position.y = y;
-    pivot.rotation.y = (i / count) * Math.PI * 2;
+    const a = (i / count) * Math.PI * 2;
     const blade = new THREE.Mesh(geo, mat);
-    blade.rotation.x = -Math.PI / 2;
-    blade.position.y = -0.007;
-    pivot.add(blade);
-    optic.add(pivot);
+    blade.position.set(Math.cos(a) * 0.58, y, Math.sin(a) * 0.58);
+    blade.rotation.y = a + 0.55;
+    optic.add(blade);
   }
 }
 
@@ -186,7 +186,7 @@ function bindAll(mats, env) {
   }
 }
 
-export function createLens(cheapGlass, env) {
+export function createLens(cheapGlass, env, world) {
   const root = new THREE.Group();
   const yaw = new THREE.Group();
   const optic = new THREE.Group();
@@ -195,7 +195,7 @@ export function createLens(cheapGlass, env) {
   const lip = lipSteel();
   const baffle = baffleMat();
   const blades = bladeMat();
-  const glass = makeFrontGlass(cheapGlass, env);
+  const glass = makeFrontGlass(cheapGlass, env, world);
   bindAll([body, lip, baffle, blades], env);
 
   const retain = new THREE.Mesh(new THREE.TorusGeometry(0.82, 0.05, 16, 64), lip);
@@ -219,14 +219,15 @@ export function createLens(cheapGlass, env) {
   }
 
   addBaffle(optic, baffle, 0.58, 0.78, -0.22);
-  addBaffle(optic, baffle, 0.48, 0.68, -0.5);
-  addBaffle(optic, baffle, 0.36, 0.56, -0.78);
+  addBaffle(optic, baffle, 0.52, 0.7, -0.48);
+  addBaffle(optic, baffle, 0.455, 0.62, -0.68);
+  addBaffle(optic, baffle, 0.5, 0.64, -0.92);
 
   addIris(optic, blades);
 
   const element = new THREE.Mesh(frontElementGeometry(), glass);
   element.name = "lens";
-  element.position.y = -1.02;
+  element.position.y = -0.72;
   optic.add(element);
 
   const sleeve = new THREE.Mesh(
@@ -243,10 +244,10 @@ export function createLens(cheapGlass, env) {
   barrel.position.y = -1.08;
   optic.add(barrel);
 
-  const rearCap = new THREE.Mesh(new THREE.CircleGeometry(0.9, 20), body);
-  rearCap.rotation.x = Math.PI / 2;
-  rearCap.position.y = -1.56;
-  optic.add(rearCap);
+  const rearRing = new THREE.Mesh(new THREE.TorusGeometry(0.88, 0.03, 8, 28), body);
+  rearRing.rotation.x = Math.PI / 2;
+  rearRing.position.y = -1.56;
+  optic.add(rearRing);
 
   const rings = [
     [1.03, 0.018, -0.06, lip],
@@ -270,8 +271,12 @@ export function createLens(cheapGlass, env) {
     yaw,
     optic,
     element,
-    bindEnv(next) {
+    bindEnv(next, nextWorld) {
       glass.envMap = next;
+      if (nextWorld) {
+        glass.map = nextWorld;
+        glass.emissiveMap = nextWorld;
+      }
       bindAll([body, lip, baffle, blades], next);
     },
   };
@@ -311,8 +316,44 @@ function bake(pmrem, paint) {
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.mapping = THREE.EquirectangularReflectionMapping;
   const env = pmrem.fromEquirectangular(tex).texture;
+  const world = worldDisc(canvas);
   tex.dispose();
-  return env;
+  return { env, world };
+}
+
+function worldDisc(src) {
+  const size = 256;
+  const dst = document.createElement("canvas");
+  dst.width = size;
+  dst.height = size;
+  const sctx = src.getContext("2d");
+  const dctx = dst.getContext("2d");
+  const srcImg = sctx.getImageData(0, 0, 256, 128);
+  const dstImg = dctx.createImageData(size, size);
+  const mid = (size - 1) * 0.5;
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const dx = (x - mid) / mid;
+      const dy = (y - mid) / mid;
+      const r = Math.hypot(dx, dy);
+      const i = (y * size + x) * 4;
+      if (r > 1) {
+        dstImg.data[i + 3] = 0;
+        continue;
+      }
+      const u = ((Math.atan2(dy, dx) / (Math.PI * 2) + 0.5) * 256) | 0;
+      const v = Math.min(127, (r * 128) | 0);
+      const si = (v * 256 + (u & 255)) * 4;
+      dstImg.data[i] = srcImg.data[si];
+      dstImg.data[i + 1] = srcImg.data[si + 1];
+      dstImg.data[i + 2] = srcImg.data[si + 2];
+      dstImg.data[i + 3] = 255;
+    }
+  }
+  dctx.putImageData(dstImg, 0, 0);
+  const tex = new THREE.CanvasTexture(dst);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
 }
 
 function paintRest(ctx) {
@@ -385,12 +426,21 @@ function paintEvents(ctx) {
 
 export function createEnvironments(renderer) {
   const pmrem = new THREE.PMREMGenerator(renderer);
-  const maps = {
-    rest: bake(pmrem, paintRest),
-    sites: bake(pmrem, paintSites),
-    interiors: bake(pmrem, paintInteriors),
-    events: bake(pmrem, paintEvents),
-  };
+  const rest = bake(pmrem, paintRest);
+  const sites = bake(pmrem, paintSites);
+  const interiors = bake(pmrem, paintInteriors);
+  const events = bake(pmrem, paintEvents);
   pmrem.dispose();
-  return maps;
+  return {
+    rest: rest.env,
+    sites: sites.env,
+    interiors: interiors.env,
+    events: events.env,
+    world: {
+      rest: rest.world,
+      sites: sites.world,
+      interiors: interiors.world,
+      events: events.world,
+    },
+  };
 }
