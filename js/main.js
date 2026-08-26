@@ -89,7 +89,6 @@ function boot() {
   applyPose(rest, rest, 0);
   renderer.compile(scene, camera);
 
-  let bootFrames = 0;
   function centerSum() {
     const w = canvas.width;
     const h = canvas.height;
@@ -114,15 +113,19 @@ function boot() {
     return max;
   }
 
-  function bootPaint() {
+  let bootFrames = 0;
+  while (bootFrames < 8) {
     renderer.render(scene, camera);
     bootFrames += 1;
-    if (centerSum() < 48 && bootFrames < 16) {
-      requestAnimationFrame(bootPaint);
-      return;
-    }
+    if (centerSum() >= 48) break;
   }
-  bootPaint();
+  function bootPaint() {
+    if (centerSum() >= 48 || bootFrames >= 16) return;
+    renderer.render(scene, camera);
+    bootFrames += 1;
+    requestAnimationFrame(bootPaint);
+  }
+  if (centerSum() < 48) requestAnimationFrame(bootPaint);
 
   window.addEventListener(
     "scroll",
