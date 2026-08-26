@@ -65,7 +65,7 @@ function boot() {
   scene.add(fill);
 
   const keys = [
-    { t: 0, pos: [0.12, 0.18, 2.2], look: [0, 0, 0.45], yaw: 0, pitch: 0.04, fov: 24 },
+    { t: 0, pos: [0.1, 0.14, 1.55], look: [0, 0, 0.12], yaw: 0, pitch: 0.04, fov: 24 },
     { t: 0.2, pos: [0.22, 0.2, 2.4], look: [0, 0, 0.32], yaw: 0.16, pitch: 0.05, fov: 25 },
     { t: 0.4, pos: [0.7, 0.16, 2.15], look: [0, 0, 0.2], yaw: 0.48, pitch: 0.05, fov: 26 },
     { t: 0.6, pos: [1.15, 0.22, 1.7], look: [0, 0, 0.05], yaw: 0.88, pitch: 0.02, fov: 27 },

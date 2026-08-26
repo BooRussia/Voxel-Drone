@@ -36,15 +36,6 @@ function bladeMat() {
   });
 }
 
-function beadMat() {
-  return new THREE.MeshStandardMaterial({
-    color: 0xdde4ee,
-    metalness: 0.95,
-    roughness: 0.08,
-    envMapIntensity: 1.1,
-  });
-}
-
 function radialThicknessMap() {
   const size = 256;
   const canvas = document.createElement("canvas");
@@ -112,8 +103,23 @@ function makeElement(cheap) {
 }
 
 function frontElementGeometry() {
-  const R = 1.12;
-  const geo = new THREE.SphereGeometry(R, 64, 32, 0, Math.PI * 2, 0, Math.PI / 2);
+  const R = 1.08;
+  const frontSag = 0.22;
+  const edgeT = 0.12;
+  const pts = [];
+  for (let i = 0; i <= 18; i += 1) {
+    const t = i / 18;
+    const r = R * t;
+    const yFront = frontSag * (1 - t * t);
+    const yBack = yFront - (edgeT - (edgeT - 0.07) * (1 - t * t));
+    pts.push(new THREE.Vector2(r, yBack));
+  }
+  for (let i = 18; i >= 0; i -= 1) {
+    const t = i / 18;
+    const r = Math.max(R * t, 0.0008);
+    pts.push(new THREE.Vector2(r, frontSag * (1 - t * t)));
+  }
+  const geo = new THREE.LatheGeometry(pts, 64);
   const uv = geo.attributes.uv;
   const pos = geo.attributes.position;
   for (let i = 0; i < pos.count; i += 1) {
@@ -150,7 +156,7 @@ export function createLens(cheapGlass) {
   const well = wellMat();
   const glass = makeElement(cheapGlass);
 
-  const retain = new THREE.Mesh(new THREE.TorusGeometry(1.14, 0.05, 10, 64), lip);
+  const retain = new THREE.Mesh(new THREE.TorusGeometry(1.1, 0.048, 10, 64), lip);
   retain.rotation.x = Math.PI / 2;
   retain.position.y = 0;
   optic.add(retain);
@@ -199,10 +205,6 @@ export function createLens(cheapGlass) {
 
   addIris(optic, bladeMat());
 
-  const bead = new THREE.Mesh(new THREE.SphereGeometry(0.048, 16, 12), beadMat());
-  bead.position.y = -0.28;
-  optic.add(bead);
-
   optic.rotation.x = -Math.PI / 2;
   yaw.add(optic);
   root.add(yaw);
@@ -230,43 +232,43 @@ function pine(ctx, x, baseY, h, w) {
 
 export function createEnvironment(renderer) {
   const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 256;
+  canvas.width = 256;
+  canvas.height = 128;
   const ctx = canvas.getContext("2d");
 
   ctx.fillStyle = "#7d8ea4";
-  ctx.fillRect(0, 0, 512, 88);
+  ctx.fillRect(0, 0, 256, 44);
   ctx.fillStyle = "#66758c";
-  ctx.fillRect(0, 88, 512, 36);
+  ctx.fillRect(0, 44, 256, 18);
   ctx.fillStyle = "#b67a3c";
-  ctx.fillRect(0, 124, 512, 18);
+  ctx.fillRect(0, 62, 256, 9);
   ctx.fillStyle = "#d89a46";
-  ctx.fillRect(0, 138, 512, 12);
+  ctx.fillRect(0, 69, 256, 6);
   ctx.fillStyle = "#6a3818";
-  ctx.fillRect(0, 150, 512, 16);
+  ctx.fillRect(0, 75, 256, 8);
   ctx.fillStyle = "#08090c";
-  ctx.fillRect(0, 166, 512, 90);
+  ctx.fillRect(0, 83, 256, 45);
 
   ctx.fillStyle = "rgba(230, 236, 244, 0.4)";
   ctx.beginPath();
-  ctx.ellipse(96, 36, 58, 5, -0.1, 0, Math.PI * 2);
+  ctx.ellipse(48, 18, 29, 3, -0.1, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.ellipse(210, 22, 40, 4, 0.08, 0, Math.PI * 2);
+  ctx.ellipse(105, 11, 20, 2, 0.08, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.ellipse(340, 40, 72, 5, 0.04, 0, Math.PI * 2);
+  ctx.ellipse(170, 20, 36, 3, 0.04, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.ellipse(455, 18, 36, 3, -0.06, 0, Math.PI * 2);
+  ctx.ellipse(228, 9, 18, 2, -0.06, 0, Math.PI * 2);
   ctx.fill();
 
-  pine(ctx, 40, 168, 86, 44);
-  pine(ctx, 72, 168, 62, 30);
-  pine(ctx, 14, 168, 52, 26);
-  pine(ctx, 474, 168, 88, 46);
-  pine(ctx, 440, 168, 64, 32);
-  pine(ctx, 500, 168, 50, 24);
+  pine(ctx, 20, 84, 43, 22);
+  pine(ctx, 36, 84, 31, 15);
+  pine(ctx, 7, 84, 26, 13);
+  pine(ctx, 237, 84, 44, 23);
+  pine(ctx, 220, 84, 32, 16);
+  pine(ctx, 250, 84, 25, 12);
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
