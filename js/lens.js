@@ -1,43 +1,53 @@
 import * as THREE from "three";
 
-function satinBlack() {
+function graphite() {
   return new THREE.MeshStandardMaterial({
-    color: 0x2a2c32,
-    metalness: 0.62,
-    roughness: 0.42,
+    color: 0x3a3d42,
+    metalness: 0.3,
+    roughness: 0.7,
+    envMapIntensity: 0.42,
+  });
+}
+
+function lipSteel() {
+  return new THREE.MeshStandardMaterial({
+    color: 0x5c6066,
+    metalness: 0.52,
+    roughness: 0.4,
     envMapIntensity: 1.15,
   });
 }
 
-function lipMetal() {
+function baffleMat() {
   return new THREE.MeshStandardMaterial({
-    color: 0x8a8e98,
-    metalness: 0.9,
-    roughness: 0.28,
-    envMapIntensity: 1.35,
-  });
-}
-
-function wellMat() {
-  return new THREE.MeshStandardMaterial({
-    color: 0x060607,
-    metalness: 0.18,
-    roughness: 0.78,
+    color: 0x121316,
+    metalness: 0.12,
+    roughness: 0.86,
     envMapIntensity: 0.08,
+    side: THREE.DoubleSide,
   });
 }
 
 function bladeMat() {
   return new THREE.MeshStandardMaterial({
-    color: 0x3a3c42,
-    metalness: 0.5,
-    roughness: 0.4,
-    envMapIntensity: 0.25,
+    color: 0x2a2c32,
+    metalness: 0.35,
+    roughness: 0.48,
+    envMapIntensity: 0.2,
+  });
+}
+
+function stackGlass() {
+  return new THREE.MeshStandardMaterial({
+    color: 0x1c2228,
+    metalness: 0.12,
+    roughness: 0.08,
+    envMapIntensity: 0.7,
   });
 }
 
 function radialThicknessMap() {
-  const size = 256;
+  const size = 128;
   const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
@@ -63,23 +73,24 @@ function radialThicknessMap() {
   return tex;
 }
 
-function makeElement(cheap, env) {
+function makeFrontGlass(cheap, env) {
   const thicknessMap = radialThicknessMap();
   if (cheap) {
     return new THREE.MeshPhysicalMaterial({
-      color: 0xcfd8e4,
+      color: 0xc5ced8,
       metalness: 0,
-      roughness: 0,
+      roughness: 0.04,
       ior: 1.52,
-      thickness: 1.2,
+      thickness: 0.9,
       thicknessMap,
       dispersion: 0,
       clearcoat: 1,
-      clearcoatRoughness: 0.02,
-      opacity: 1,
-      transparent: false,
+      clearcoatRoughness: 0.04,
+      opacity: 0.42,
+      transparent: true,
+      depthWrite: false,
       envMap: env,
-      envMapIntensity: 2.6,
+      envMapIntensity: 2.4,
     });
   }
 
@@ -90,61 +101,91 @@ function makeElement(cheap, env) {
     transmission: 1,
     opacity: 1,
     transparent: false,
-    thickness: 1.35,
+    thickness: 1.15,
     thicknessMap,
     ior: 1.52,
-    dispersion: 0.32,
+    dispersion: 0,
     clearcoat: 1,
-    clearcoatRoughness: 0.02,
-    attenuationColor: new THREE.Color(0xd4e0ec),
-    attenuationDistance: 2.4,
+    clearcoatRoughness: 0.03,
+    attenuationColor: new THREE.Color(0xd0dae4),
+    attenuationDistance: 2.2,
     envMap: env,
-    envMapIntensity: 2.8,
+    envMapIntensity: 1.85,
     specularIntensity: 1,
   });
 }
 
 function frontElementGeometry() {
-  const R = 1.08;
-  const frontSag = 0.22;
-  const edgeT = 0.12;
+  const R = 0.58;
+  const frontSag = 0.16;
   const pts = [];
-  for (let i = 0; i <= 18; i += 1) {
-    const t = i / 18;
+  for (let i = 0; i <= 12; i += 1) {
+    const t = i / 12;
     const r = R * t;
     const yFront = frontSag * (1 - t * t);
-    const yBack = yFront - (edgeT - (edgeT - 0.07) * (1 - t * t));
+    const yBack = yFront - (0.09 - 0.03 * (1 - t * t));
     pts.push(new THREE.Vector2(r, yBack));
   }
-  for (let i = 18; i >= 0; i -= 1) {
-    const t = i / 18;
-    const r = Math.max(R * t, 0.0008);
-    pts.push(new THREE.Vector2(r, frontSag * (1 - t * t)));
+  for (let i = 12; i >= 0; i -= 1) {
+    const t = i / 12;
+    pts.push(new THREE.Vector2(Math.max(R * t, 0.0008), frontSag * (1 - t * t)));
   }
-  const geo = new THREE.LatheGeometry(pts, 64);
+  const geo = new THREE.LatheGeometry(pts, 24);
   const uv = geo.attributes.uv;
   const pos = geo.attributes.position;
   for (let i = 0; i < pos.count; i += 1) {
-    const x = pos.getX(i) / R;
-    const z = pos.getZ(i) / R;
-    uv.setXY(i, x * 0.5 + 0.5, z * 0.5 + 0.5);
+    uv.setXY(i, pos.getX(i) / R * 0.5 + 0.5, pos.getZ(i) / R * 0.5 + 0.5);
   }
   uv.needsUpdate = true;
   return geo;
 }
 
+function rearFloorGeometry() {
+  const pts = [];
+  for (let i = 12; i >= 0; i -= 1) {
+    const t = i / 12;
+    pts.push(new THREE.Vector2(0.62 * t, -0.06 * (1 - t * t)));
+  }
+  return new THREE.LatheGeometry(pts, 16);
+}
+
 function addIris(optic, mat) {
   const count = 9;
   for (let i = 0; i < count; i += 1) {
-    const blade = new THREE.Mesh(
-      new THREE.TorusGeometry(0.34, 0.048, 6, 16, Math.PI * 0.7),
-      mat
-    );
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.01, 0.13), mat);
     const a = (i / count) * Math.PI * 2;
-    blade.rotation.x = Math.PI / 2;
-    blade.rotation.z = a + 0.32;
-    blade.position.y = -0.22;
+    blade.position.set(Math.cos(a) * 0.24, -0.48, Math.sin(a) * 0.24);
+    blade.rotation.y = a + 0.58;
+    blade.rotation.x = 0.16;
     optic.add(blade);
+  }
+}
+
+function addCoatGhosts(optic) {
+  const green = new THREE.MeshBasicMaterial({
+    color: 0x2f5a48,
+    transparent: true,
+    opacity: 0.2,
+    depthWrite: false,
+  });
+  const magenta = new THREE.MeshBasicMaterial({
+    color: 0x5a2a40,
+    transparent: true,
+    opacity: 0.16,
+    depthWrite: false,
+  });
+  const g = new THREE.Mesh(new THREE.TorusGeometry(0.575, 0.005, 4, 16), green);
+  g.rotation.x = Math.PI / 2;
+  g.position.y = 0.07;
+  const m = new THREE.Mesh(new THREE.TorusGeometry(0.562, 0.004, 4, 16), magenta);
+  m.rotation.x = Math.PI / 2;
+  m.position.y = 0.055;
+  optic.add(g, m);
+}
+
+function bindAll(mats, env) {
+  for (const mat of mats) {
+    mat.envMap = env;
   }
 }
 
@@ -153,144 +194,223 @@ export function createLens(cheapGlass, env) {
   const yaw = new THREE.Group();
   const optic = new THREE.Group();
 
-  const black = satinBlack();
-  const lip = lipMetal();
-  const well = wellMat();
+  const body = graphite();
+  const lip = lipSteel();
+  const baffle = baffleMat();
   const blades = bladeMat();
-  black.envMap = env;
-  lip.envMap = env;
-  well.envMap = env;
-  blades.envMap = env;
-  black.envMapIntensity = 1.55;
-  lip.envMapIntensity = 1.85;
-  const glass = makeElement(cheapGlass, env);
+  const stack = stackGlass();
+  const glass = makeFrontGlass(cheapGlass, env);
+  bindAll([body, lip, baffle, blades, stack], env);
 
-  const retain = new THREE.Mesh(new THREE.TorusGeometry(1.1, 0.048, 10, 64), lip);
+  const retain = new THREE.Mesh(new THREE.TorusGeometry(0.74, 0.028, 6, 24), lip);
   retain.rotation.x = Math.PI / 2;
-  retain.position.y = 0;
+  retain.position.y = 0.02;
   optic.add(retain);
 
-  const recessWall = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.12, 1.1, 0.18, 64, 1, true),
-    well
+  const recess = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.76, 0.7, 0.36, 24, 1, true),
+    baffle
   );
-  recessWall.position.y = -0.08;
-  optic.add(recessWall);
+  recess.position.y = -0.16;
+  optic.add(recess);
 
   const element = new THREE.Mesh(frontElementGeometry(), glass);
   element.name = "lens";
   optic.add(element);
+  addCoatGhosts(optic);
 
-  const rings = [
-    [1.22, 0.032, -0.08, lip],
-    [1.3, 0.028, -0.18, black],
-    [1.38, 0.03, -0.28, lip],
-    [1.46, 0.026, -0.38, black],
-    [1.54, 0.03, -0.48, black],
+  const spacer = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.68, 0.64, 0.22, 20, 1, true),
+    baffle
+  );
+  spacer.position.y = -0.24;
+  optic.add(spacer);
+
+  const l2 = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.018, 5, 20), stack);
+  l2.rotation.x = Math.PI / 2;
+  l2.position.y = -0.34;
+  optic.add(l2);
+
+  const baffles = [
+    [0.64, 0.012, -0.1],
+    [0.55, 0.012, -0.28],
+    [0.44, 0.012, -0.58],
   ];
-  for (const [r, tube, y, mat] of rings) {
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(r, tube, 6, 48), mat);
+  for (const [r, tube, y] of baffles) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(r, tube, 4, 14), baffle);
     ring.rotation.x = Math.PI / 2;
     ring.position.y = y;
     optic.add(ring);
   }
 
-  const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(1.56, 1.5, 0.55, 48), black);
+  addIris(optic, blades);
+
+  const floor = new THREE.Mesh(rearFloorGeometry(), stack);
+  floor.position.y = -0.78;
+  optic.add(floor);
+
+  const sleeve = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.02, 1.0, 0.72, 28, 1, true),
+    body
+  );
   sleeve.position.y = -0.28;
   optic.add(sleeve);
 
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(1.48, 1.32, 0.55, 40), black);
-  barrel.position.y = -0.72;
+  const barrel = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.0, 0.9, 0.95, 28, 1, true),
+    body
+  );
+  barrel.position.y = -1.08;
   optic.add(barrel);
 
-  const throat = new THREE.Mesh(new THREE.CylinderGeometry(0.86, 0.36, 0.55, 32, 1, true), well);
-  throat.position.y = -0.22;
-  optic.add(throat);
+  const rearCap = new THREE.Mesh(new THREE.CircleGeometry(0.9, 20), body);
+  rearCap.rotation.x = Math.PI / 2;
+  rearCap.position.y = -1.56;
+  optic.add(rearCap);
 
-  const baffle = new THREE.Mesh(new THREE.TorusGeometry(0.52, 0.018, 6, 28), well);
-  baffle.rotation.x = Math.PI / 2;
-  baffle.position.y = -0.16;
-  optic.add(baffle);
+  const rings = [
+    [1.03, 0.018, -0.06, lip],
+    [1.04, 0.016, -0.22, body],
+    [1.03, 0.016, -0.42, body],
+    [0.98, 0.016, -0.88, body],
+  ];
+  for (const [r, tube, y, mat] of rings) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(r, tube, 4, 18), mat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = y;
+    optic.add(ring);
+  }
 
-  addIris(optic, blades);
-
-  // +X rotation maps optic +Y (front sag) onto world +Z, so the camera
-  // on +Z stares into the meniscus instead of the hollow throat.
   optic.rotation.x = Math.PI / 2;
   yaw.add(optic);
   root.add(yaw);
 
-  return { root, yaw, optic, element };
+  return {
+    root,
+    yaw,
+    optic,
+    element,
+    bindEnv(next) {
+      glass.envMap = next;
+      bindAll([body, lip, baffle, blades, stack], next);
+    },
+  };
 }
 
-function pine(ctx, x, baseY, h, w) {
-  ctx.fillStyle = "#040506";
-  ctx.beginPath();
-  ctx.moveTo(x, baseY - h);
-  ctx.lineTo(x + w * 0.16, baseY - h * 0.6);
-  ctx.lineTo(x + w * 0.06, baseY - h * 0.6);
-  ctx.lineTo(x + w * 0.26, baseY - h * 0.32);
-  ctx.lineTo(x + w * 0.08, baseY - h * 0.32);
-  ctx.lineTo(x + w * 0.36, baseY);
-  ctx.lineTo(x - w * 0.36, baseY);
-  ctx.lineTo(x - w * 0.08, baseY - h * 0.32);
-  ctx.lineTo(x - w * 0.26, baseY - h * 0.32);
-  ctx.lineTo(x - w * 0.06, baseY - h * 0.6);
-  ctx.lineTo(x - w * 0.16, baseY - h * 0.6);
-  ctx.closePath();
-  ctx.fill();
+export function createPool() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d");
+  const grad = ctx.createRadialGradient(64, 64, 6, 64, 64, 64);
+  grad.addColorStop(0, "rgba(40,42,46,0.5)");
+  grad.addColorStop(0.42, "rgba(16,16,18,0.18)");
+  grad.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 128, 128);
+  const tex = new THREE.CanvasTexture(canvas);
+  const mesh = new THREE.Mesh(
+    new THREE.CircleGeometry(3.2, 32),
+    new THREE.MeshBasicMaterial({
+      map: tex,
+      transparent: true,
+      depthWrite: false,
+    })
+  );
+  mesh.position.set(0.2, -1.15, -0.55);
+  mesh.lookAt(0, 0.2, 4);
+  return mesh;
 }
 
-function duskCanvas() {
+function bake(pmrem, paint) {
   const canvas = document.createElement("canvas");
   canvas.width = 256;
   canvas.height = 128;
-  const ctx = canvas.getContext("2d");
-
-  ctx.fillStyle = "#9eb0c6";
-  ctx.fillRect(0, 0, 256, 44);
-  ctx.fillStyle = "#7d8aa0";
-  ctx.fillRect(0, 44, 256, 18);
-  ctx.fillStyle = "#d4924a";
-  ctx.fillRect(0, 62, 256, 9);
-  ctx.fillStyle = "#f0b45a";
-  ctx.fillRect(0, 69, 256, 6);
-  ctx.fillStyle = "#8a4a1c";
-  ctx.fillRect(0, 75, 256, 8);
-  ctx.fillStyle = "#101218";
-  ctx.fillRect(0, 83, 256, 45);
-
-  ctx.fillStyle = "rgba(230, 236, 244, 0.4)";
-  ctx.beginPath();
-  ctx.ellipse(48, 18, 29, 3, -0.1, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(105, 11, 20, 2, 0.08, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(170, 20, 36, 3, 0.04, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(228, 9, 18, 2, -0.06, 0, Math.PI * 2);
-  ctx.fill();
-
-  pine(ctx, 20, 84, 43, 22);
-  pine(ctx, 36, 84, 31, 15);
-  pine(ctx, 7, 84, 26, 13);
-  pine(ctx, 237, 84, 44, 23);
-  pine(ctx, 220, 84, 32, 16);
-  pine(ctx, 250, 84, 25, 12);
-  return canvas;
-}
-
-export function createEnvironment(renderer) {
-  const canvas = duskCanvas();
+  paint(canvas.getContext("2d"));
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.mapping = THREE.EquirectangularReflectionMapping;
-  const pmrem = new THREE.PMREMGenerator(renderer);
   const env = pmrem.fromEquirectangular(tex).texture;
   tex.dispose();
-  pmrem.dispose();
   return env;
+}
+
+function paintRest(ctx) {
+  ctx.fillStyle = "#8a96a6";
+  ctx.fillRect(0, 0, 256, 46);
+  ctx.fillStyle = "#6c7684";
+  ctx.fillRect(0, 46, 256, 16);
+  ctx.fillStyle = "#c48a48";
+  ctx.fillRect(0, 62, 256, 10);
+  ctx.fillStyle = "#7a3e18";
+  ctx.fillRect(0, 72, 256, 10);
+  ctx.fillStyle = "#101214";
+  ctx.fillRect(0, 82, 256, 46);
+  ctx.fillStyle = "rgba(220,226,234,0.35)";
+  ctx.beginPath();
+  ctx.ellipse(70, 16, 28, 3, -0.08, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(190, 12, 22, 2, 0.06, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function paintSites(ctx) {
+  ctx.fillStyle = "#6a7c88";
+  ctx.fillRect(0, 0, 256, 50);
+  ctx.fillStyle = "#4e5c64";
+  ctx.fillRect(0, 50, 256, 18);
+  ctx.fillStyle = "#8a6a48";
+  ctx.fillRect(0, 68, 256, 8);
+  ctx.fillStyle = "#121416";
+  ctx.fillRect(0, 76, 256, 52);
+  ctx.fillStyle = "rgba(180,196,204,0.28)";
+  ctx.fillRect(20, 20, 70, 4);
+  ctx.fillRect(160, 14, 50, 3);
+}
+
+function paintInteriors(ctx) {
+  ctx.fillStyle = "#1a1612";
+  ctx.fillRect(0, 0, 256, 128);
+  ctx.fillStyle = "#3a3228";
+  ctx.fillRect(0, 40, 256, 48);
+  ctx.fillStyle = "#d2b48a";
+  ctx.fillRect(28, 48, 36, 22);
+  ctx.fillRect(86, 52, 28, 18);
+  ctx.fillRect(150, 46, 40, 24);
+  ctx.fillRect(210, 54, 22, 16);
+  ctx.fillStyle = "rgba(255,220,170,0.18)";
+  ctx.fillRect(0, 44, 256, 8);
+}
+
+function paintEvents(ctx) {
+  ctx.fillStyle = "#0c1016";
+  ctx.fillRect(0, 0, 256, 128);
+  ctx.fillStyle = "#1a2430";
+  ctx.fillRect(0, 36, 256, 28);
+  ctx.fillStyle = "#c8d0d8";
+  for (const [x, y, r] of [
+    [40, 18, 2],
+    [90, 10, 1.5],
+    [150, 22, 2],
+    [210, 14, 1.4],
+    [70, 70, 1.2],
+    [180, 64, 1.6],
+  ]) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+export function createEnvironments(renderer) {
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const maps = {
+    rest: bake(pmrem, paintRest),
+    sites: bake(pmrem, paintSites),
+    interiors: bake(pmrem, paintInteriors),
+    events: bake(pmrem, paintEvents),
+  };
+  pmrem.dispose();
+  return maps;
 }
