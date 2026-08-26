@@ -63,7 +63,7 @@ function radialThicknessMap() {
   return tex;
 }
 
-function makeElement(cheap) {
+function makeElement(cheap, env) {
   const thicknessMap = radialThicknessMap();
   if (cheap) {
     return new THREE.MeshPhysicalMaterial({
@@ -78,7 +78,8 @@ function makeElement(cheap) {
       clearcoatRoughness: 0.02,
       opacity: 1,
       transparent: false,
-      envMapIntensity: 2.2,
+      envMap: env,
+      envMapIntensity: 2.6,
     });
   }
 
@@ -95,9 +96,10 @@ function makeElement(cheap) {
     dispersion: 0.32,
     clearcoat: 1,
     clearcoatRoughness: 0.02,
-      attenuationColor: new THREE.Color(0xd4e0ec),
-      attenuationDistance: 2.4,
-      envMapIntensity: 2.15,
+    attenuationColor: new THREE.Color(0xd4e0ec),
+    attenuationDistance: 2.4,
+    envMap: env,
+    envMapIntensity: 2.8,
     specularIntensity: 1,
   });
 }
@@ -146,7 +148,7 @@ function addIris(optic, mat) {
   }
 }
 
-export function createLens(cheapGlass) {
+export function createLens(cheapGlass, env) {
   const root = new THREE.Group();
   const yaw = new THREE.Group();
   const optic = new THREE.Group();
@@ -154,7 +156,14 @@ export function createLens(cheapGlass) {
   const black = satinBlack();
   const lip = lipMetal();
   const well = wellMat();
-  const glass = makeElement(cheapGlass);
+  const blades = bladeMat();
+  black.envMap = env;
+  lip.envMap = env;
+  well.envMap = env;
+  blades.envMap = env;
+  black.envMapIntensity = 1.55;
+  lip.envMapIntensity = 1.85;
+  const glass = makeElement(cheapGlass, env);
 
   const retain = new THREE.Mesh(new THREE.TorusGeometry(1.1, 0.048, 10, 64), lip);
   retain.rotation.x = Math.PI / 2;
@@ -203,22 +212,7 @@ export function createLens(cheapGlass) {
   baffle.position.y = -0.16;
   optic.add(baffle);
 
-  addIris(optic, bladeMat());
-
-  const wellMap = new THREE.CanvasTexture(duskCanvas());
-  wellMap.colorSpace = THREE.SRGBColorSpace;
-  wellMap.needsUpdate = true;
-  const plate = new THREE.Mesh(
-    new THREE.CircleGeometry(1.06, 48),
-    new THREE.MeshBasicMaterial({
-      map: wellMap,
-      color: 0xffffff,
-      side: THREE.DoubleSide,
-    })
-  );
-  plate.rotation.x = -Math.PI / 2;
-  plate.position.y = -0.34;
-  optic.add(plate);
+  addIris(optic, blades);
 
   // +X rotation maps optic +Y (front sag) onto world +Z, so the camera
   // on +Z stares into the meniscus instead of the hollow throat.

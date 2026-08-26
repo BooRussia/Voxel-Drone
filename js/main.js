@@ -50,9 +50,10 @@ function boot() {
     40
   );
 
-  scene.environment = createEnvironment(renderer);
+  const env = createEnvironment(renderer);
+  scene.environment = env;
 
-  const lens = createLens(iphone);
+  const lens = createLens(iphone, env);
   scene.add(lens.root);
   placeLens();
 
