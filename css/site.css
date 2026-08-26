@@ -1,4 +1,5 @@
 :root {
+  color-scheme: dark;
   --void: #000;
   --type: #f0f0fa;
   --mute: rgba(240, 240, 250, 0.52);
@@ -228,6 +229,8 @@ form textarea {
 form textarea {
   min-height: 4.2rem;
   resize: vertical;
+  border: none;
+  border-bottom: 1px solid var(--line);
 }
 
 form input:focus,

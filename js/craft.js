@@ -2,17 +2,17 @@ import * as THREE from "three";
 
 function graphite() {
   return new THREE.MeshStandardMaterial({
-    color: 0x16161a,
-    metalness: 0.84,
-    roughness: 0.36,
+    color: 0x2a2c32,
+    metalness: 0.86,
+    roughness: 0.32,
   });
 }
 
 function carbon() {
   return new THREE.MeshStandardMaterial({
-    color: 0x0a0a0c,
-    metalness: 0.42,
-    roughness: 0.64,
+    color: 0x14161a,
+    metalness: 0.48,
+    roughness: 0.58,
   });
 }
 

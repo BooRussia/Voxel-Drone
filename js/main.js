@@ -36,7 +36,7 @@ function boot() {
   renderer.setClearColor(0x000000, 1);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.78;
+  renderer.toneMappingExposure = 1.05;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x000000);
@@ -55,19 +55,24 @@ function boot() {
   const craft = createCraft(cheapGlass);
   scene.add(craft.root);
   scene.add(createFlorida());
+  placeCraft();
 
-  const key = new THREE.DirectionalLight(0xe8ecff, 1.15);
-  key.position.set(2.4, 3.2, 2.8);
+  const key = new THREE.DirectionalLight(0xf2f4ff, 2.15);
+  key.position.set(2.1, 2.4, 3.2);
   scene.add(key);
 
-  const rim = new THREE.DirectionalLight(0x9eb0d0, 0.55);
-  rim.position.set(-3.2, 1.1, -1.6);
+  const rim = new THREE.DirectionalLight(0xb7c6e0, 1.15);
+  rim.position.set(-3.4, 1.4, -1.2);
   scene.add(rim);
 
-  const fill = new THREE.AmbientLight(0x101018, 0.35);
+  const belly = new THREE.DirectionalLight(0xdde4f4, 0.55);
+  belly.position.set(0.2, -1.8, 1.6);
+  scene.add(belly);
+
+  const fill = new THREE.AmbientLight(0x1a1c24, 0.55);
   scene.add(fill);
 
-  const hemi = new THREE.HemisphereLight(0x141422, 0x050508, 0.4);
+  const hemi = new THREE.HemisphereLight(0x2a2e3c, 0x08080c, 0.7);
   scene.add(hemi);
 
   const keys = [
@@ -77,7 +82,7 @@ function boot() {
     { t: 0.48, pos: [0.15, 1.35, 4.55], look: [0, -0.05, 0], yaw: 1.15, gy: -0.18, gp: 0.18, fov: 35 },
     { t: 0.66, pos: [-2.15, 0.88, 3.25], look: [0, -0.04, 0], yaw: 1.65, gy: 0.28, gp: -0.08, fov: 34 },
     { t: 0.83, pos: [1.05, 0.42, 2.55], look: [0.08, -0.08, 0.1], yaw: 2.05, gy: 0.12, gp: 0.1, fov: 32 },
-    { t: 1, pos: [1.72, 0.26, 1.68], look: [0.14, -0.14, 0.18], yaw: 2.35, gy: 0.04, gp: 0.06, fov: 31 },
+    { t: 1, pos: [2.55, 0.62, 2.35], look: [0.55, -0.06, 0.08], yaw: 2.35, gy: 0.04, gp: 0.06, fov: 31 },
   ];
 
   const rest = keys[0];
@@ -179,6 +184,14 @@ function boot() {
     craft.gimbal.rotation.x = lerp(a.gp, b.gp, u);
   }
 
+  function placeCraft() {
+    if (window.innerWidth < 800) {
+      craft.root.position.set(0.42, 0.06, 0);
+    } else {
+      craft.root.position.set(0.22, 0, 0);
+    }
+  }
+
   function onResize() {
     const w = window.innerWidth;
     const h = window.innerHeight;
@@ -186,6 +199,7 @@ function boot() {
     camera.updateProjectionMatrix();
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.setSize(w, h, false);
+    placeCraft();
   }
 
   function tick(time) {
