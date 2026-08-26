@@ -168,12 +168,12 @@ function addIris(optic, mat) {
 }
 
 function addBaffle(optic, mat, inner, outer, y) {
-  const face = new THREE.Mesh(new THREE.RingGeometry(inner, outer, 28), mat);
+  const face = new THREE.Mesh(new THREE.RingGeometry(inner, outer, 48), mat);
   face.rotation.x = -Math.PI / 2;
   face.position.y = y;
   optic.add(face);
   const lip = new THREE.Mesh(
-    new THREE.CylinderGeometry(inner, inner + 0.018, 0.045, 24, 1, true),
+    new THREE.CylinderGeometry(inner, inner + 0.018, 0.045, 48, 1, true),
     mat
   );
   lip.position.y = y - 0.02;
@@ -211,7 +211,7 @@ export function createLens(cheapGlass, env, world) {
   ];
   for (const [rt, rb, h, y] of steps) {
     const wall = new THREE.Mesh(
-      new THREE.CylinderGeometry(rt, rb, h, 28, 1, true),
+      new THREE.CylinderGeometry(rt, rb, h, 48, 1, true),
       baffle
     );
     wall.position.y = y;
@@ -256,7 +256,7 @@ export function createLens(cheapGlass, env, world) {
     [0.98, 0.016, -0.88, body],
   ];
   for (const [r, tube, y, mat] of rings) {
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(r, tube, 4, 18), mat);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(r, tube, 12, 48), mat);
     ring.rotation.x = Math.PI / 2;
     ring.position.y = y;
     optic.add(ring);
