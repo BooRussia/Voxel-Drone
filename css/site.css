@@ -43,18 +43,26 @@ body {
   display: block;
   z-index: 0;
   pointer-events: none;
+  background: #000;
 }
 
-.part107 {
+.hud {
   position: fixed;
   top: max(1.1rem, env(safe-area-inset-top));
   right: max(1.2rem, env(safe-area-inset-right));
   z-index: 3;
+  pointer-events: none;
+  padding: 0.35rem 0.55rem;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.hud p {
   font-size: 0.56rem;
+  font-weight: 400;
   letter-spacing: 0.42em;
   color: var(--type);
-  opacity: 0.42;
-  pointer-events: none;
+  opacity: 0.55;
 }
 
 main {
@@ -76,6 +84,13 @@ main {
   pointer-events: none;
 }
 
+.overlay p {
+  font-weight: 400;
+  font-size: clamp(0.9rem, 1.8vw, 1.2rem);
+  letter-spacing: 0.36em;
+  margin-bottom: 1.1rem;
+}
+
 .overlay a,
 .overlay button,
 .overlay input,
@@ -86,7 +101,7 @@ main {
 
 h1 {
   font-size: clamp(1.8rem, 4vw, 3.15rem);
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.46em;
   line-height: 1.05;
   margin-left: -0.08em;
@@ -94,6 +109,7 @@ h1 {
 
 .place {
   margin-top: 1.15rem;
+  margin-bottom: 0;
   font-size: 0.68rem;
   letter-spacing: 0.38em;
   color: var(--mute);
@@ -103,20 +119,22 @@ h1 {
   display: inline-block;
   margin-top: 2.5rem;
   padding: 0.82em 1.85em 0.78em;
-  border: 1px solid var(--line);
+  border: 1px solid var(--type);
   border-radius: 999px;
   color: var(--type);
   background: transparent;
   text-decoration: none;
   letter-spacing: 0.4em;
   font-size: 0.68rem;
+  font-weight: 400;
   font-family: inherit;
   text-transform: uppercase;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .ghost:hover,
 .ghost:focus-visible {
-  border-color: var(--type);
   outline: none;
 }
 
@@ -125,27 +143,6 @@ h1 {
   font-size: 0.58rem;
   letter-spacing: 0.28em;
   color: var(--mute);
-}
-
-.windows {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 1.35rem;
-  padding-top: 8vh;
-}
-
-.windows li {
-  font-size: clamp(1rem, 2vw, 1.35rem);
-  letter-spacing: 0.36em;
-}
-
-.windows span {
-  display: inline-block;
-  width: 2.6rem;
-  color: var(--mute);
-  letter-spacing: 0.22em;
-  font-size: 0.72em;
 }
 
 .kicker {
@@ -159,25 +156,10 @@ h1 {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 1.6rem;
+  gap: 1.15rem;
 }
 
 .stills li {
-  display: grid;
-  grid-template-columns: 3.2rem 1fr auto;
-  align-items: center;
-  gap: 0.85rem;
-}
-
-.stills i {
-  display: block;
-  width: 3.2rem;
-  height: 2rem;
-  border: 1px solid var(--line);
-  background: transparent;
-}
-
-.stills b {
   font-weight: 400;
   font-size: 0.72rem;
   letter-spacing: 0.28em;
@@ -189,22 +171,20 @@ h1 {
   color: var(--mute);
 }
 
-.trio {
-  padding-top: 22vh;
-  font-size: clamp(0.85rem, 1.7vw, 1.15rem);
-  letter-spacing: 0.42em;
-}
-
 form {
   display: flex;
   flex-direction: column;
   gap: 1.15rem;
   width: min(100%, 22rem);
+  padding: 1rem 0.85rem 1.1rem;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 
 form label {
   display: block;
   font-size: 0.56rem;
+  font-weight: 400;
   letter-spacing: 0.3em;
   color: var(--mute);
 }
@@ -220,17 +200,17 @@ form textarea {
   border-radius: 0;
   color: var(--type);
   font: inherit;
+  font-weight: 400;
   letter-spacing: 0.12em;
   text-transform: none;
   padding: 0.4rem 0;
   appearance: none;
+  box-shadow: none;
 }
 
 form textarea {
   min-height: 4.2rem;
   resize: vertical;
-  border: none;
-  border-bottom: 1px solid var(--line);
 }
 
 form input:focus,
@@ -255,17 +235,7 @@ form .ghost {
     letter-spacing: 0.34em;
   }
 
-  .part107 {
+  .hud p {
     letter-spacing: 0.32em;
-  }
-
-  .stills li {
-    grid-template-columns: 2.6rem 1fr auto;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
   }
 }

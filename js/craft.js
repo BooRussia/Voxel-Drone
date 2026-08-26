@@ -27,14 +27,16 @@ function alloy() {
 function makeGlass(cheap) {
   if (cheap) {
     return new THREE.MeshPhysicalMaterial({
-      color: 0xd8e2ee,
-      metalness: 0.08,
-      roughness: 0.06,
+      color: 0xdde6f0,
+      metalness: 0.06,
+      roughness: 0.05,
+      ior: 1.5,
+      thickness: 0.8,
       clearcoat: 1,
       clearcoatRoughness: 0.04,
-      transparent: true,
-      opacity: 0.38,
-      envMapIntensity: 1.6,
+      opacity: 1,
+      transparent: false,
+      envMapIntensity: 1.8,
       reflectivity: 1,
     });
   }
@@ -42,43 +44,19 @@ function makeGlass(cheap) {
   return new THREE.MeshPhysicalMaterial({
     color: 0xffffff,
     metalness: 0,
-    roughness: 0.025,
+    roughness: 0.02,
     transmission: 1,
-    thickness: 1.15,
-    ior: 1.52,
+    opacity: 1,
+    transparent: false,
+    thickness: 1.1,
+    ior: 1.5,
+    dispersion: 0.32,
     clearcoat: 1,
     clearcoatRoughness: 0.02,
     attenuationColor: new THREE.Color(0xc5d4e6),
-    attenuationDistance: 0.85,
-    envMapIntensity: 1.25,
+    attenuationDistance: 0.9,
+    envMapIntensity: 1.2,
     specularIntensity: 1,
-  });
-}
-
-function makeRimMaterial() {
-  return new THREE.ShaderMaterial({
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    vertexShader: `
-      varying vec3 vN;
-      varying vec3 vV;
-      void main() {
-        vec4 w = modelViewMatrix * vec4(position, 1.0);
-        vN = normalize(normalMatrix * normal);
-        vV = normalize(-w.xyz);
-        gl_Position = projectionMatrix * w;
-      }
-    `,
-    fragmentShader: `
-      varying vec3 vN;
-      varying vec3 vV;
-      void main() {
-        float f = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.55);
-        vec3 c = vec3(0.42 * f, 0.7 * f, 1.0 * f);
-        gl_FragColor = vec4(c, clamp(f, 0.0, 1.0));
-      }
-    `,
   });
 }
 
@@ -94,12 +72,23 @@ function placeBetween(mesh, from, to) {
 
 function makeProp(mat) {
   const g = new THREE.Group();
-  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.01, 10), mat);
+  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.01, 8), mat);
   const blade = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.0035, 0.028), mat);
   const blade2 = blade.clone();
   blade2.rotation.y = Math.PI / 2;
   g.add(hub, blade, blade2);
   return g;
+}
+
+function countTris(root) {
+  let n = 0;
+  root.traverse((obj) => {
+    const geo = obj.geometry;
+    if (!geo) return;
+    if (geo.index) n += geo.index.count / 3;
+    else if (geo.attributes.position) n += geo.attributes.position.count / 3;
+  });
+  return n;
 }
 
 export function createCraft(cheapGlass) {
@@ -112,16 +101,8 @@ export function createCraft(cheapGlass) {
   const carbonMat = carbon();
   const alloyMat = alloy();
   const glassMat = makeGlass(cheapGlass);
-  const rimMat = makeRimMaterial();
-  const ledMat = new THREE.MeshStandardMaterial({
-    color: 0x9aa6bc,
-    emissive: 0x6b778c,
-    emissiveIntensity: 0.35,
-    metalness: 0.2,
-    roughness: 0.3,
-  });
 
-  const hull = new THREE.Mesh(new THREE.CapsuleGeometry(0.155, 0.36, 6, 18), bodyMat);
+  const hull = new THREE.Mesh(new THREE.CapsuleGeometry(0.155, 0.36, 4, 12), bodyMat);
   hull.rotation.z = Math.PI / 2;
   hull.scale.set(1, 0.52, 0.82);
   airframe.add(hull);
@@ -134,7 +115,7 @@ export function createCraft(cheapGlass) {
   battery.position.y = -0.058;
   airframe.add(battery);
 
-  const nose = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.085, 0.15, 12), bodyMat);
+  const nose = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.085, 0.15, 8), bodyMat);
   nose.rotation.x = Math.PI / 2;
   nose.position.set(0, -0.008, 0.27);
   airframe.add(nose);
@@ -144,12 +125,6 @@ export function createCraft(cheapGlass) {
   antenna.rotation.z = -0.18;
   airframe.add(antenna);
 
-  const ledL = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.006, 0.006), ledMat);
-  const ledR = ledL.clone();
-  ledL.position.set(-0.12, 0.078, 0.06);
-  ledR.position.set(0.12, 0.078, 0.06);
-  airframe.add(ledL, ledR);
-
   const armEnds = [
     [0.5, 0.045, 0.5],
     [-0.5, 0.045, 0.5],
@@ -158,15 +133,15 @@ export function createCraft(cheapGlass) {
   ];
 
   for (const end of armEnds) {
-    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.014, 1, 8), carbonMat);
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.014, 1, 6), carbonMat);
     placeBetween(arm, [0, 0.02, 0], end);
     airframe.add(arm);
 
-    const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.046, 0.038, 12), alloyMat);
+    const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.046, 0.038, 8), alloyMat);
     motor.position.set(end[0], end[1] + 0.02, end[2]);
     airframe.add(motor);
 
-    const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.02, 12), carbonMat);
+    const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.02, 8), carbonMat);
     bell.position.set(end[0], end[1] + 0.042, end[2]);
     airframe.add(bell);
 
@@ -186,13 +161,12 @@ export function createCraft(cheapGlass) {
   airframe.add(skidL, skidR);
 
   const leg = new THREE.CylinderGeometry(0.006, 0.006, 0.12, 6);
-  const legs = [
+  for (const p of [
     [-0.12, -0.1, 0.18],
     [-0.12, -0.1, -0.14],
     [0.12, -0.1, 0.18],
     [0.12, -0.1, -0.14],
-  ];
-  for (const p of legs) {
+  ]) {
     const m = new THREE.Mesh(leg, carbonMat);
     m.position.set(...p);
     airframe.add(m);
@@ -200,11 +174,11 @@ export function createCraft(cheapGlass) {
 
   gimbal.position.set(0, -0.205, 0.205);
 
-  const outer = new THREE.Mesh(new THREE.TorusGeometry(0.112, 0.011, 8, 28), alloyMat);
+  const outer = new THREE.Mesh(new THREE.TorusGeometry(0.112, 0.011, 6, 16), alloyMat);
   outer.rotation.y = Math.PI / 2;
   gimbal.add(outer);
 
-  const inner = new THREE.Mesh(new THREE.TorusGeometry(0.096, 0.008, 8, 24), alloyMat);
+  const inner = new THREE.Mesh(new THREE.TorusGeometry(0.096, 0.008, 6, 16), alloyMat);
   gimbal.add(inner);
 
   const forkL = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.09, 0.012), alloyMat);
@@ -213,73 +187,56 @@ export function createCraft(cheapGlass) {
   forkR.position.set(0.11, 0.03, 0);
   gimbal.add(forkL, forkR);
 
-  const housing = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.05, 16), alloyMat);
+  const housing = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.05, 8), alloyMat);
   housing.rotation.x = Math.PI / 2;
   housing.position.z = -0.055;
   gimbal.add(housing);
 
-  const lens = new THREE.Mesh(new THREE.SphereGeometry(0.086, 48, 32), glassMat);
+  const lens = new THREE.Mesh(new THREE.SphereGeometry(0.086, 20, 16), glassMat);
   lens.name = "lens";
   gimbal.add(lens);
-
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.087, 0.0036, 10, 48), rimMat);
-  rim.rotation.x = Math.PI / 2;
-  gimbal.add(rim);
 
   airframe.add(gimbal);
   root.add(airframe);
 
-  return { root, airframe, gimbal, props, lens };
+  return {
+    root,
+    airframe,
+    gimbal,
+    props,
+    lens,
+    tris: {
+      lens: countTris(lens),
+      airframe: countTris(airframe) - countTris(lens),
+    },
+  };
 }
 
 export function createFlorida() {
   const canvas = document.createElement("canvas");
-  canvas.width = 1024;
-  canvas.height = 1024;
+  canvas.width = 256;
+  canvas.height = 256;
   const ctx = canvas.getContext("2d");
-
   ctx.fillStyle = "#010204";
-  ctx.fillRect(0, 0, 1024, 1024);
-
-  const water = ctx.createRadialGradient(420, 540, 30, 500, 520, 720);
-  water.addColorStop(0, "#07131c");
-  water.addColorStop(0.4, "#081610");
-  water.addColorStop(1, "#010203");
-  ctx.fillStyle = water;
-  ctx.fillRect(0, 0, 1024, 1024);
-
+  ctx.fillRect(0, 0, 256, 256);
+  ctx.fillStyle = "#071310";
+  ctx.fillRect(0, 90, 256, 80);
   ctx.fillStyle = "#0b1410";
   ctx.beginPath();
-  ctx.moveTo(540, 70);
-  ctx.bezierCurveTo(830, 110, 900, 390, 860, 690);
-  ctx.bezierCurveTo(820, 930, 640, 990, 550, 900);
-  ctx.bezierCurveTo(410, 770, 470, 380, 540, 70);
+  ctx.moveTo(135, 18);
+  ctx.bezierCurveTo(208, 28, 225, 98, 215, 172);
+  ctx.bezierCurveTo(205, 232, 160, 248, 138, 225);
+  ctx.bezierCurveTo(102, 192, 118, 95, 135, 18);
   ctx.fill();
-
   ctx.fillStyle = "#102018";
-  ctx.beginPath();
-  ctx.ellipse(620, 430, 90, 70, 0.2, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.strokeStyle = "rgba(210, 220, 230, 0.045)";
-  ctx.lineWidth = 1;
-  for (let i = 0; i < 1024; i += 46) {
-    ctx.beginPath();
-    ctx.moveTo(i, 0);
-    ctx.lineTo(i, 1024);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(0, i);
-    ctx.lineTo(1024, i);
-    ctx.stroke();
-  }
+  ctx.fillRect(140, 92, 36, 28);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 4;
+  texture.anisotropy = 1;
 
   const land = new THREE.Mesh(
-    new THREE.CircleGeometry(28, 64),
+    new THREE.CircleGeometry(28, 24),
     new THREE.MeshStandardMaterial({
       map: texture,
       roughness: 0.95,
@@ -292,29 +249,29 @@ export function createFlorida() {
 }
 
 export function createEnvironment(renderer) {
-  const envScene = new THREE.Scene();
-  envScene.background = new THREE.Color(0x000000);
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, 0, 256, 128);
+  ctx.fillStyle = "#f0f2ff";
+  ctx.fillRect(24, 8, 208, 5);
+  ctx.fillStyle = "#d4dcff";
+  ctx.fillRect(10, 36, 8, 48);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(238, 28, 6, 40);
+  ctx.fillStyle = "#7f96b4";
+  ctx.fillRect(40, 110, 176, 4);
+  ctx.fillStyle = "#c8d0e4";
+  ctx.fillRect(180, 50, 28, 6);
 
-  const bars = [
-    { pos: [0, 5, 0], scale: [10, 0.12, 0.55], color: 0xf0f2ff },
-    { pos: [-3.2, 1.6, 2.2], scale: [0.16, 4.2, 0.16], color: 0xd4dcff },
-    { pos: [3.6, 2.1, -1.2], scale: [0.12, 3.2, 0.12], color: 0xffffff },
-    { pos: [0, -1.8, 3.4], scale: [7, 0.08, 0.35], color: 0x7f96b4 },
-    { pos: [1.5, 0.4, -3], scale: [0.2, 0.2, 3.5], color: 0xc8d0e4 },
-  ];
-
-  for (const bar of bars) {
-    const mesh = new THREE.Mesh(
-      new THREE.BoxGeometry(1, 1, 1),
-      new THREE.MeshBasicMaterial({ color: bar.color })
-    );
-    mesh.position.set(...bar.pos);
-    mesh.scale.set(...bar.scale);
-    envScene.add(mesh);
-  }
-
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.mapping = THREE.EquirectangularReflectionMapping;
   const pmrem = new THREE.PMREMGenerator(renderer);
-  const env = pmrem.fromScene(envScene, 0.04, 0.1, 100).texture;
+  const env = pmrem.fromEquirectangular(tex).texture;
+  tex.dispose();
   pmrem.dispose();
   return env;
 }
