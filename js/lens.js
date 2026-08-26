@@ -37,15 +37,6 @@ function bladeMat() {
   });
 }
 
-function stackGlass() {
-  return new THREE.MeshStandardMaterial({
-    color: 0x1c2228,
-    metalness: 0.12,
-    roughness: 0.08,
-    envMapIntensity: 0.7,
-  });
-}
-
 function radialThicknessMap() {
   const size = 128;
   const canvas = document.createElement("canvas");
@@ -91,6 +82,7 @@ function makeFrontGlass(cheap, env) {
       depthWrite: false,
       envMap: env,
       envMapIntensity: 2.4,
+      vertexColors: true,
     });
   }
 
@@ -112,6 +104,7 @@ function makeFrontGlass(cheap, env) {
     envMap: env,
     envMapIntensity: 1.85,
     specularIntensity: 1,
+    vertexColors: true,
   });
 }
 
@@ -133,10 +126,20 @@ function frontElementGeometry() {
   const geo = new THREE.LatheGeometry(pts, 24);
   const uv = geo.attributes.uv;
   const pos = geo.attributes.position;
+  const colors = new Float32Array(pos.count * 3);
   for (let i = 0; i < pos.count; i += 1) {
-    uv.setXY(i, pos.getX(i) / R * 0.5 + 0.5, pos.getZ(i) / R * 0.5 + 0.5);
+    const x = pos.getX(i);
+    const z = pos.getZ(i);
+    uv.setXY(i, x / R * 0.5 + 0.5, z / R * 0.5 + 0.5);
+    const edge = Math.max(0, Math.min(1, (Math.hypot(x, z) - 0.48) / 0.1));
+    const a = Math.atan2(z, x);
+    const g = 0.5 + 0.5 * Math.sin(a * 2);
+    colors[i * 3] = 1 - edge * (0.1 + 0.16 * (1 - g));
+    colors[i * 3 + 1] = 1 - edge * (0.05 + 0.1 * g);
+    colors[i * 3 + 2] = 1 - edge * (0.08 + 0.14 * (1 - g));
   }
   uv.needsUpdate = true;
+  geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
   return geo;
 }
 
@@ -161,28 +164,6 @@ function addIris(optic, mat) {
   }
 }
 
-function addCoatGhosts(optic) {
-  const green = new THREE.MeshBasicMaterial({
-    color: 0x2f5a48,
-    transparent: true,
-    opacity: 0.2,
-    depthWrite: false,
-  });
-  const magenta = new THREE.MeshBasicMaterial({
-    color: 0x5a2a40,
-    transparent: true,
-    opacity: 0.16,
-    depthWrite: false,
-  });
-  const g = new THREE.Mesh(new THREE.TorusGeometry(0.575, 0.005, 4, 16), green);
-  g.rotation.x = Math.PI / 2;
-  g.position.y = 0.07;
-  const m = new THREE.Mesh(new THREE.TorusGeometry(0.562, 0.004, 4, 16), magenta);
-  m.rotation.x = Math.PI / 2;
-  m.position.y = 0.055;
-  optic.add(g, m);
-}
-
 function bindAll(mats, env) {
   for (const mat of mats) {
     mat.envMap = env;
@@ -198,9 +179,8 @@ export function createLens(cheapGlass, env) {
   const lip = lipSteel();
   const baffle = baffleMat();
   const blades = bladeMat();
-  const stack = stackGlass();
   const glass = makeFrontGlass(cheapGlass, env);
-  bindAll([body, lip, baffle, blades, stack], env);
+  bindAll([body, lip, baffle, blades], env);
 
   const retain = new THREE.Mesh(new THREE.TorusGeometry(0.74, 0.028, 6, 24), lip);
   retain.rotation.x = Math.PI / 2;
@@ -217,7 +197,6 @@ export function createLens(cheapGlass, env) {
   const element = new THREE.Mesh(frontElementGeometry(), glass);
   element.name = "lens";
   optic.add(element);
-  addCoatGhosts(optic);
 
   const spacer = new THREE.Mesh(
     new THREE.CylinderGeometry(0.68, 0.64, 0.22, 20, 1, true),
@@ -225,11 +204,6 @@ export function createLens(cheapGlass, env) {
   );
   spacer.position.y = -0.24;
   optic.add(spacer);
-
-  const l2 = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.018, 5, 20), stack);
-  l2.rotation.x = Math.PI / 2;
-  l2.position.y = -0.34;
-  optic.add(l2);
 
   const baffles = [
     [0.64, 0.012, -0.1],
@@ -245,7 +219,7 @@ export function createLens(cheapGlass, env) {
 
   addIris(optic, blades);
 
-  const floor = new THREE.Mesh(rearFloorGeometry(), stack);
+  const floor = new THREE.Mesh(rearFloorGeometry(), baffle);
   floor.position.y = -0.78;
   optic.add(floor);
 
@@ -292,7 +266,7 @@ export function createLens(cheapGlass, env) {
     element,
     bindEnv(next) {
       glass.envMap = next;
-      bindAll([body, lip, baffle, blades, stack], next);
+      bindAll([body, lip, baffle, blades], next);
     },
   };
 }
