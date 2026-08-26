@@ -71,19 +71,21 @@ function makeFrontGlass(cheap, env) {
     return new THREE.MeshPhysicalMaterial({
       color: 0xc5ced8,
       metalness: 0,
-      roughness: 0.08,
+      roughness: 0.04,
       ior: 1.52,
-      thickness: 0.55,
+      thickness: 0.7,
       thicknessMap,
       dispersion: 0,
-      clearcoat: 0.35,
-      clearcoatRoughness: 0.08,
-      opacity: 0.28,
+      clearcoat: 0.4,
+      clearcoatRoughness: 0.06,
+      opacity: 0.55,
       transparent: true,
       depthWrite: false,
+      wireframe: false,
+      flatShading: false,
       envMap: env,
-      envMapIntensity: 0.28,
-      specularIntensity: 0.22,
+      envMapIntensity: 1.25,
+      specularIntensity: 0.7,
       vertexColors: true,
     });
   }
@@ -91,21 +93,23 @@ function makeFrontGlass(cheap, env) {
   return new THREE.MeshPhysicalMaterial({
     color: 0xffffff,
     metalness: 0,
-    roughness: 0.08,
+    roughness: 0.03,
     transmission: 1,
     opacity: 1,
     transparent: false,
-    thickness: 0.55,
+    thickness: 0.7,
     thicknessMap,
     ior: 1.52,
     dispersion: 0,
-    clearcoat: 0.35,
-    clearcoatRoughness: 0.08,
+    clearcoat: 0.4,
+    clearcoatRoughness: 0.05,
     attenuationColor: new THREE.Color(0xd0dae4),
-    attenuationDistance: 3.4,
+    attenuationDistance: 2.8,
+    wireframe: false,
+    flatShading: false,
     envMap: env,
-    envMapIntensity: 0.28,
-    specularIntensity: 0.22,
+    envMapIntensity: 1.35,
+    specularIntensity: 0.75,
     vertexColors: true,
   });
 }
@@ -114,18 +118,19 @@ function frontElementGeometry() {
   const R = 0.3;
   const frontSag = -0.03;
   const pts = [];
-  for (let i = 0; i <= 10; i += 1) {
-    const t = i / 10;
+  for (let i = 0; i <= 24; i += 1) {
+    const t = i / 24;
     const r = R * t;
     const yFront = frontSag * (1 - t * t);
     const yBack = yFront - (0.04 - 0.012 * (1 - t * t));
     pts.push(new THREE.Vector2(r, yBack));
   }
-  for (let i = 10; i >= 0; i -= 1) {
-    const t = i / 10;
+  for (let i = 24; i >= 0; i -= 1) {
+    const t = i / 24;
     pts.push(new THREE.Vector2(Math.max(R * t, 0.0008), frontSag * (1 - t * t)));
   }
-  const geo = new THREE.LatheGeometry(pts, 20);
+  const geo = new THREE.LatheGeometry(pts, 64);
+  geo.computeVertexNormals();
   const uv = geo.attributes.uv;
   const pos = geo.attributes.position;
   const colors = new Float32Array(pos.count * 3);
